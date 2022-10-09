@@ -79,6 +79,7 @@ function install_pyenv() {
             else
                 echo "Adding pyenv to $__pyenv_shell_cfg..."
                 {
+                    echo ""
                     echo "# pyenv"
                     echo "export PYENV_ROOT=\"\$HOME/.pyenv\""
                     echo "command -v pyenv >/dev/null || export PATH=\"\$PYENV_ROOT/bin:\$PATH\""
@@ -89,11 +90,13 @@ function install_pyenv() {
                 eval "$(pyenv init -)"
             fi
         fi
-
     fi
-    pyenv install 3:latest
-    pyenv global "$(pyenv versions | tail -n 1 | sed 's/^[ \t]*//')"
-    echo "Using python version: $(python --version)"
+
+    # search latest pure python and install
+    latest_python_version=$(pyenv install --list | grep -E "^\s+3\.[0-9]+\.[0-9]+$" | tail -n 1 | sed -e "s/^[[:space:]]*//")
+    pyenv install "$latest_python_version"
+    pyenv global "$latest_python_version"
+    echo "Using python version: '$latest_python_version'"
 }
 
 function setup_poetry() {
@@ -112,8 +115,11 @@ function setup_poetry() {
             :
         else
             echo "Adding poetry to $__poetryshell_cfg..."
-            echo "# poetry" >>"$__poetryshell_cfg"
-            echo "export PATH=\"\$PATH:$HOME/.local/bin\"" >>"$__poetryshell_cfg"
+            {
+                echo ""
+                echo "# poetry"
+                echo "export PATH=\"\$PATH:$HOME/.local/bin\""
+            } >>"$__poetryshell_cfg"
             export PATH="$PATH:$HOME/.local/bin"
         fi
     fi
@@ -131,6 +137,15 @@ function setup_poetry() {
 }
 
 # Main
+
+# install python dependencies
+sudo apt-get update && sudo apt-get upgrade -y
+
+sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+
+# judge if I am in WSL
 if type "code" >/dev/null 2>&1; then
     # install vscode-server
     if [ -d "$HOME/.vscode-server" ]; then
@@ -142,12 +157,6 @@ if type "code" >/dev/null 2>&1; then
 
     # install vscode extension
     install_vscode_extensions
-
-    # install python dependencies
-    sudo apt-get update
-    sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
-        libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
-        libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 
     # install pyenv
     install_pyenv
