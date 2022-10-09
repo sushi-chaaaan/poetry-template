@@ -75,7 +75,7 @@ function install_pyenv() {
         wait
     else
         echo "installing pyenv..."
-        curl https://pyenv.run | bash >>/dev/null 2>&1 &
+        curl -sSL https://pyenv.run | bash >>/dev/null 2>&1 &
         wait
 
         __pyenv_shell_cfg=$(check_shell_and_get_shell_config_file)
