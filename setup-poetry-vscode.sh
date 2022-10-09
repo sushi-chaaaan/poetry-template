@@ -133,7 +133,7 @@ install_and_setup_pyenv() {
     fi
 
     # search latest pure python and install
-    latest_python_version=$(pyenv install --list | grep -E "^\s+3\.[0-9]+\.[0-9]+$" | tail -n 1 | sed -e "s/^[[:space:]]*//")
+    latest_python_version="$(pyenv install --list | grep -E "^\s+3\.[0-9]+\.[0-9]+$" | tail -n 1 | sed -e "s/^[[:space:]]*//")"
     echo "Installing python $latest_python_version with pyenv..."
     pyenv install "$latest_python_version" >>/dev/null 2>&1 &
     wait
