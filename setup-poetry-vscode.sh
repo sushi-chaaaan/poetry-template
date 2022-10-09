@@ -1,5 +1,35 @@
 #!/bin/bash
 
+# Main
+
+# judge if I am in WSL
+OS_ENV=$(judge_os) # MACOS or LINUX or WSL
+
+if [ "$OS_ENV" = "WSL" ]; then
+    # install vscode
+    setup_vscode_wsl
+
+    # setup python env
+    poetry_status=""
+    setup_python_env
+
+    # create vscode workspace
+    setup_vscode_workspace
+
+    code -g "$workspace_file_name" -n
+
+elif [ "$OS_ENV" = "LINUX" ]; then
+    # setup python env
+    poetry_status=""
+    setup_python_env
+elif [ "$OS_ENV" = "MACOS" ]; then
+    # setup python env
+    poetry_status=""
+    setup_python_env
+else
+    echo "Unknown OS"
+fi
+
 countdown() {
     sec=$1
     while [ "$sec" -ge 0 ]; do
@@ -9,11 +39,11 @@ countdown() {
     done
 }
 
-function get_dir() {
+get_dir() {
     pwd | awk -F'/' '{print $NF}'
 }
 
-function check_shell_and_get_shell_config_file() {
+check_shell_and_get_shell_config_file() {
     if [ -n "$ZSH_VERSION" ]; then
         echo "$HOME/.zshrc"
     elif [ -n "$BASH_VERSION" ]; then
@@ -21,54 +51,91 @@ function check_shell_and_get_shell_config_file() {
     fi
 }
 
-function create_workspace() {
-    if [ $# -eq 0 ]; then
-        echo "create_workspace requires workspace_file_name"
-        return 1
-    elif [ $# -eq 1 ]; then
-        echo "create_workspace requires poetry status"
+judge_os() {
+    if [ "$(uname)" = "Darwin" ]; then
+        echo "MACOS"
+    elif [[ "$(uname -r)" = *"WSL"* ]]; then
+        echo "WSL"
+    elif [ "$(uname)" = "Linux" ]; then
+        echo "LINUX"
+    fi
+}
+
+judge_linux_package_manager() {
+    if [ -x "$(command -v apt-get)" ]; then
+        echo "APT"
+    elif [ -x "$(command -v yum)" ]; then
+        echo "YUM"
+    elif [ -x "$(command -v dnf)" ]; then
+        echo "DNF"
+    elif [ -x "$(command -v pacman)" ]; then
+        echo "PACMAN"
+    elif [ -x "$(command -v apk)" ]; then
+        echo "ALPINE"
+    elif [ -x "$(command -v xbps-install)" ]; then
+        echo "VOID"
     else
-        workspace_file_name="$1"
-        touch "$workspace_file_name"
-        {
-            echo "{"
-            echo "    \"folders\": ["
-            echo "        {"
-            echo "            \"path\": \".\""
-            echo "        }"
-            echo "    ],"
-        } >>"$workspace_file_name"
+        echo "UNKNOWN"
+        return 1
+    fi
+}
 
-        if [ "$2" = "true" ]; then
-            {
-                echo "    \"settings\": {"
-                echo "        \"editor.formatOnSave\": true,"
-                echo "        \"python.linting.enabled\": true,"
-                echo "        \"python.linting.flake8Enabled\": true,"
-                echo "        \"python.linting.flake8Path\": \".venv/bin/pflake8\""
-                echo "    }"
-                echo "}"
-            } >>"$workspace_file_name"
+setup_vscode_wsl() {
+    # install vscode-server
+    if [ -d "$HOME/.vscode-server" ]; then
+        echo "VSCode Server already installed, skipping..."
+    else
+        echo "Installing VSCode Server..."
+        code -h >/dev/null 2>&1
+    fi
 
-        elif [ "$2" = "false" ]; then
-            {
-                echo "    \"settings\": {}"
-                echo "}"
-            } >>"$workspace_file_name"
+    # install vscode extension
+    install_vscode_extensions
+}
+
+install_vscode_extensions() {
+    echo "Installing VSCode extensions..."
+    code --install-extension ms-python.python --force >>/dev/null 2>&1 &
+    wait
+}
+
+install_python_deps() {
+    # macos
+    if [ "$(OS_ENV)" = "MACOS" ]; then
+        brew install openssl readline sqlite3 xz zlib tcl-tk
+    # linux
+    elif [ "$(OS_ENV)" = "LINUX" ]; then
+        PKM=$(judge_linux_package_manager)
+        # apt
+        if [ "$PKM" = "APT" ]; then
+            sudo apt-get update
+            sudo apt-get install make build-essential libssl-dev zlib1g-dev \
+                libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+                libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+        # yum
+        elif [ "$PKM" = "YUM" ]; then
+            sudo yum install gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel
+        # dnf
+        elif [ "$PKM" = "DNF" ]; then
+            sudo dnf install make gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel xz-devel
+        # pacman
+        elif [ "$PKM" = "PACMAN" ]; then
+            sudo pacman -S --noconfirm base-devel openssl zlib xz tk
+        # alpine
+        elif [ "$PKM" = "ALPINE" ]; then
+            sudo apk add linux-headers
+            sudo apk add --no-cache git bash build-base libffi-dev openssl-dev bzip2-dev zlib-dev xz-dev readline-dev sqlite-dev tk-dev
+        # void
+        elif [ "$PKM" = "VOID" ]; then
+            xbps-install base-devel bzip2-devel openssl openssl-devel readline readline-devel sqlite-devel xz zlib zlib-devel
         else
-            echo "invalid poetry status"
+            echo "Unknown package manager, skipping..."
             return 1
         fi
     fi
 }
 
-function install_vscode_extensions() {
-    echo "Installing vscode extensions..."
-    code --install-extension ms-python.python --force >>/dev/null 2>&1 &
-    wait
-}
-
-function install_pyenv() {
+install_and_setup_pyenv() {
     if [ -d "$HOME/.pyenv" ]; then
         echo "Updating pyenv..."
         pyenv update >>/dev/null 2>&1 &
@@ -107,7 +174,7 @@ function install_pyenv() {
     echo "Using python version: $latest_python_version"
 }
 
-function setup_poetry() {
+install_and_setup_poetry() {
     # install poetry
     if type poetry >/dev/null 2>&1; then
         echo "Updating poetry..."
@@ -147,35 +214,13 @@ function setup_poetry() {
     fi
 }
 
-# Main
+setup_python_env() {
+    install_python_deps
+    install_and_setup_pyenv
+    install_and_setup_poetry
+}
 
-# install python dependencies
-sudo apt-get update && sudo apt-get upgrade -y
-
-sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
-    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
-    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-
-# judge if I am in WSL
-if type "code" >/dev/null 2>&1; then
-    # install vscode-server
-    if [ -d "$HOME/.vscode-server" ]; then
-        echo "VSCode Server already installed, skipping..."
-    else
-        echo "Installing VSCode Server..."
-        code -h >/dev/null 2>&1
-    fi
-
-    # install vscode extension
-    install_vscode_extensions
-
-    # install pyenv
-    install_pyenv
-
-    # install poetry
-    poetry_status=""
-    setup_poetry
-
+setup_vscode_workspace() {
     # create workspace
     workspace_name="$(get_dir)"
     echo "Settingup VSCode for $workspace_name"
@@ -189,11 +234,48 @@ if type "code" >/dev/null 2>&1; then
         echo "\"python.linting.flake8Path\": \".venv/bin/pflake8\""
     else
         echo "Creating workspace file..."
-        create_workspace "$workspace_file_name" "$poetry_status"
+        create_vscode_workspace "$workspace_file_name" "$poetry_status"
         countdown 5
     fi
-    code -g "$workspace_file_name" -n
-else
-    echo "No VSCode Enviroment found."
-    echo "Maybe I am not in WSL..."
-fi
+}
+
+create_vscode_workspace() {
+    if [ $# -eq 0 ]; then
+        echo "create_vscode_workspace requires workspace_file_name"
+        return 1
+    elif [ $# -eq 1 ]; then
+        echo "create_vscode_workspace requires poetry status"
+    else
+        workspace_file_name="$1"
+        touch "$workspace_file_name"
+        {
+            echo "{"
+            echo "    \"folders\": ["
+            echo "        {"
+            echo "            \"path\": \".\""
+            echo "        }"
+            echo "    ],"
+        } >>"$workspace_file_name"
+
+        if [ "$2" = "true" ]; then
+            {
+                echo "    \"settings\": {"
+                echo "        \"editor.formatOnSave\": true,"
+                echo "        \"python.linting.enabled\": true,"
+                echo "        \"python.linting.flake8Enabled\": true,"
+                echo "        \"python.linting.flake8Path\": \".venv/bin/pflake8\""
+                echo "    }"
+                echo "}"
+            } >>"$workspace_file_name"
+
+        elif [ "$2" = "false" ]; then
+            {
+                echo "    \"settings\": {}"
+                echo "}"
+            } >>"$workspace_file_name"
+        else
+            echo "invalid poetry status"
+            return 1
+        fi
+    fi
+}
