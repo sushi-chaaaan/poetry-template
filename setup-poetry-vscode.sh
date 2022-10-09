@@ -68,10 +68,10 @@ setup_vscode_wsl() {
 
 install_python_deps() {
     # macos
-    if [ "$(OS_ENV)" = "MACOS" ]; then
+    if [ "$OS_ENV" = "MACOS" ]; then
         brew install openssl readline sqlite3 xz zlib tcl-tk
     # linux
-    elif [ "$(OS_ENV)" = "LINUX" ]; then
+    elif [ "$OS_ENV" = "LINUX" ]; then
         PKM=$(judge_linux_package_manager)
         # apt
         if [ "$PKM" = "APT" ]; then
