@@ -9,6 +9,7 @@ if [ "$HOME" = "$(pwd)" ]; then
     else
         read -r -p "Please enter the name of the directory:" new_dir_name
     fi
+    wait
     mkdir -p "$new_dir_name"
     cd "$new_dir_name" || exit
 fi
