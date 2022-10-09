@@ -176,8 +176,9 @@ install_and_setup_poetry() {
         poetry install
         poetry_status="true"
     else
-        echo "No pyproject.toml found. Skipping poetry init..."
-        poetry_status="false"
+        curl -OL "https://raw.githubusercontent.com/sushi-chaaaan/poetry-template/main/pyproject.toml"
+        poetry install
+        poetry_status="true"
     fi
 }
 
