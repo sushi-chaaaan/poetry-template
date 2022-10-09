@@ -64,18 +64,18 @@ function create_workspace() {
 
 function install_vscode_extensions() {
     echo "Installing vscode extensions..."
-    code --install-extension ms-python.python --force &
+    code --install-extension ms-python.python --force >>/dev/null 2>&1 &
     wait
 }
 
 function install_pyenv() {
     if [ -d "$HOME/.pyenv" ]; then
         echo "updating pyenv..."
-        pyenv update &
+        pyenv update >>/dev/null 2>&1 &
         wait
     else
         echo "installing pyenv..."
-        curl https://pyenv.run | bash &
+        curl https://pyenv.run | bash >>/dev/null 2>&1 &
         wait
 
         __pyenv_shell_cfg=$(check_shell_and_get_shell_config_file)
@@ -101,7 +101,7 @@ function install_pyenv() {
     # search latest pure python and install
     latest_python_version=$(pyenv install --list | grep -E "^\s+3\.[0-9]+\.[0-9]+$" | tail -n 1 | sed -e "s/^[[:space:]]*//")
     echo "installing python $latest_python_version with pyenv..."
-    pyenv install "$latest_python_version" &
+    pyenv install "$latest_python_version" >>/dev/null 2>&1 &
     wait
     pyenv global "$latest_python_version"
     echo "Using python version: $latest_python_version"
@@ -110,11 +110,13 @@ function install_pyenv() {
 function setup_poetry() {
     # install poetry
     if type poetry >/dev/null 2>&1; then
-        poetry self update
+        echo "updating poetry..."
+        poetry self update >>/dev/null 2>&1 &
+        wait
     else
         mkdir -p "$HOME/.local"
         echo "Installing poetry..."
-        curl -sSL https://install.python-poetry.org | python3 - &
+        curl -sSL https://install.python-poetry.org | python3 - >>/dev/null 2>&1 &
         wait
     fi
 
