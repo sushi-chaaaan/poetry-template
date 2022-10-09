@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["sushi-chaaaan <sushi_code@outlook.jp>"]
 readme = "README.md"
-packages = [{include = "poetry_template"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
