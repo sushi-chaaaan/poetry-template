@@ -71,7 +71,7 @@ install_python_deps() {
     if [ "$OS_ENV" = "MACOS" ]; then
         brew install openssl readline sqlite3 xz zlib tcl-tk
     # linux
-    elif [ "$OS_ENV" = "LINUX" ]; then
+    elif [ "$OS_ENV" = "LINUX" ] || [ "$OS_ENV" = "WSL" ]; then
         PKM=$(judge_linux_package_manager)
         # apt
         if [ "$PKM" = "APT" ]; then
@@ -99,6 +99,10 @@ install_python_deps() {
             echo "Unknown package manager, skipping..."
             return 1
         fi
+    # unknown
+    else
+        echo "Unknown OS, skipping..."
+        return 1
     fi
 }
 
@@ -244,6 +248,15 @@ setup_vscode_workspace() {
 
 # judge if I am in WSL
 OS_ENV=$(judge_os) # MACOS or LINUX or WSL
+
+if [ "$HOME" = "$(pwd)" ]; then
+    echo "You are in your home directory."
+    echo "making a new directory..."
+    echo "Please enter the name of the directory:"
+    read -r new_dir_name
+    mkdir -p "$new_dir_name"
+    cd "$new_dir_name" || exit
+fi
 
 if [ "$OS_ENV" = "WSL" ]; then
     # install vscode
