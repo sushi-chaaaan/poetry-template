@@ -70,11 +70,11 @@ function install_vscode_extensions() {
 
 function install_pyenv() {
     if [ -d "$HOME/.pyenv" ]; then
-        echo "updating pyenv..."
+        echo "Updating pyenv..."
         pyenv update >>/dev/null 2>&1 &
         wait
     else
-        echo "installing pyenv..."
+        echo "Installing pyenv..."
         curl -sSL https://pyenv.run | bash >>/dev/null 2>&1 &
         wait
 
@@ -100,7 +100,7 @@ function install_pyenv() {
 
     # search latest pure python and install
     latest_python_version=$(pyenv install --list | grep -E "^\s+3\.[0-9]+\.[0-9]+$" | tail -n 1 | sed -e "s/^[[:space:]]*//")
-    echo "installing python $latest_python_version with pyenv..."
+    echo "Installing python $latest_python_version with pyenv..."
     pyenv install "$latest_python_version" >>/dev/null 2>&1 &
     wait
     pyenv global "$latest_python_version"
@@ -110,7 +110,7 @@ function install_pyenv() {
 function setup_poetry() {
     # install poetry
     if type poetry >/dev/null 2>&1; then
-        echo "updating poetry..."
+        echo "Updating poetry..."
         poetry self update >>/dev/null 2>&1 &
         wait
     else
@@ -195,5 +195,5 @@ if type "code" >/dev/null 2>&1; then
     code -g "$workspace_file_name" -n
 else
     echo "No VSCode Enviroment found."
-    echo "maybe here is not WSL..."
+    echo "Maybe I am not in WSL..."
 fi
