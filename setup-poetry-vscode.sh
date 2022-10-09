@@ -251,29 +251,8 @@ OS_ENV="$(judge_os)" # MACOS or LINUX or WSL
 
 if [ "$HOME" = "$(pwd)" ]; then
     echo "You are in your home directory."
-    echo "making a new directory..."
-
-    if [ -n "$ZSH_VERSION" ]; then
-        read -r "REPLY?Please enter the name of the directory:"
-    else
-        echo "Please enter the name of the directory:"
-        while :; do
-            read -r "REPLY"
-            if [ -z "$REPLY" ]; then
-                echo "Please enter the name of the directory:"
-            else
-                break
-            fi
-        done
-
-        if [[ ! -d "$REPLY" ]]; then
-            mkdir "$REPLY"
-            cd "$REPLY" || exit
-        else
-            echo "Directory already exists."
-            exit 1
-        fi
-    fi
+    echo "Please move to your project directory."
+    exit 1
 fi
 
 if [ "$OS_ENV" = "WSL" ]; then
