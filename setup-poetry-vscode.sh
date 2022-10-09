@@ -254,15 +254,13 @@ if [ "$HOME" = "$(pwd)" ]; then
     echo "making a new directory..."
 
     if [ -n "$ZSH_VERSION" ]; then
-        read -r "new_dir_name?Please enter the name of the directory:"
+        read -r "REPLY?Please enter the name of the directory:"
     else
-        read -r -p "Please enter the name of the directory:" new_dir_name
+        read -r -p "Please enter the name of the directory:"
     fi
-    wait
-    mkdir -p "$new_dir_name"
-    cd "$new_dir_name" || exit
+    mkdir -p "$REPLY"
+    cd "$REPLY" || exit
 fi
-wait
 
 if [ "$OS_ENV" = "WSL" ]; then
     # install vscode
