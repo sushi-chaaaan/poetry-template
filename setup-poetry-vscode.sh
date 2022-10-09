@@ -103,7 +103,7 @@ install_python_deps() {
 }
 
 install_and_setup_pyenv() {
-    if [ -d "$HOME/.pyenv" ]; then
+    if [ -x "$(command -v pyenv)" ]; then
         echo "Updating pyenv..."
         pyenv update >>/dev/null 2>&1 &
         wait
@@ -142,17 +142,9 @@ install_and_setup_pyenv() {
 }
 
 install_and_setup_poetry() {
-    # install poetry
-    if type poetry >/dev/null 2>&1; then
-        echo "Updating poetry..."
-        poetry self update >>/dev/null 2>&1 &
-        wait
-    else
-        mkdir -p "$HOME/.local"
-        echo "Installing poetry..."
-        curl -sSL https://install.python-poetry.org | python3 - >>/dev/null 2>&1 &
-        wait
-    fi
+    echo "Installing or Updating poetry..."
+    curl -sSL https://install.python-poetry.org | python3 - >>/dev/null 2>&1 &
+    wait
 
     __poetryshell_cfg=$(check_shell_and_get_shell_config_file)
     if [ -f "$__poetryshell_cfg" ]; then
