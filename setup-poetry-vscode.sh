@@ -1,35 +1,6 @@
 #!/bin/bash
 
-# Main
-
-# judge if I am in WSL
-OS_ENV=$(judge_os) # MACOS or LINUX or WSL
-
-if [ "$OS_ENV" = "WSL" ]; then
-    # install vscode
-    setup_vscode_wsl
-
-    # setup python env
-    poetry_status=""
-    setup_python_env
-
-    # create vscode workspace
-    setup_vscode_workspace
-
-    code -g "$workspace_file_name" -n
-
-elif [ "$OS_ENV" = "LINUX" ]; then
-    # setup python env
-    poetry_status=""
-    setup_python_env
-elif [ "$OS_ENV" = "MACOS" ]; then
-    # setup python env
-    poetry_status=""
-    setup_python_env
-else
-    echo "Unknown OS"
-fi
-
+# Funcion
 countdown() {
     sec=$1
     while [ "$sec" -ge 0 ]; do
@@ -90,10 +61,6 @@ setup_vscode_wsl() {
     fi
 
     # install vscode extension
-    install_vscode_extensions
-}
-
-install_vscode_extensions() {
     echo "Installing VSCode extensions..."
     code --install-extension ms-python.python --force >>/dev/null 2>&1 &
     wait
@@ -220,25 +187,6 @@ setup_python_env() {
     install_and_setup_poetry
 }
 
-setup_vscode_workspace() {
-    # create workspace
-    workspace_name="$(get_dir)"
-    echo "Settingup VSCode for $workspace_name"
-    workspace_file_name="$workspace_name.code-workspace"
-
-    if [ -f "$workspace_file_name" ]; then
-        echo "Workspace file already exists."
-        echo "Please add the following to settings column in your workspace file:"
-        echo "\"python.linting.enabled\": true,"
-        echo "\"python.linting.flake8Enabled\": true,"
-        echo "\"python.linting.flake8Path\": \".venv/bin/pflake8\""
-    else
-        echo "Creating workspace file..."
-        create_vscode_workspace "$workspace_file_name" "$poetry_status"
-        countdown 5
-    fi
-}
-
 create_vscode_workspace() {
     if [ $# -eq 0 ]; then
         echo "create_vscode_workspace requires workspace_file_name"
@@ -279,3 +227,52 @@ create_vscode_workspace() {
         fi
     fi
 }
+
+setup_vscode_workspace() {
+    # create workspace
+    workspace_name="$(get_dir)"
+    echo "Settingup VSCode for $workspace_name"
+    workspace_file_name="$workspace_name.code-workspace"
+
+    if [ -f "$workspace_file_name" ]; then
+        echo "Workspace file already exists."
+        echo "Please add the following to settings column in your workspace file:"
+        echo "\"python.linting.enabled\": true,"
+        echo "\"python.linting.flake8Enabled\": true,"
+        echo "\"python.linting.flake8Path\": \".venv/bin/pflake8\""
+    else
+        echo "Creating workspace file..."
+        create_vscode_workspace "$workspace_file_name" "$poetry_status"
+        countdown 5
+    fi
+}
+
+# Main
+
+# judge if I am in WSL
+OS_ENV=$(judge_os) # MACOS or LINUX or WSL
+
+if [ "$OS_ENV" = "WSL" ]; then
+    # install vscode
+    setup_vscode_wsl
+
+    # setup python env
+    poetry_status=""
+    setup_python_env
+
+    # create vscode workspace
+    setup_vscode_workspace
+
+    code -g "$workspace_file_name" -n
+
+elif [ "$OS_ENV" = "LINUX" ]; then
+    # setup python env
+    poetry_status=""
+    setup_python_env
+elif [ "$OS_ENV" = "MACOS" ]; then
+    # setup python env
+    poetry_status=""
+    setup_python_env
+else
+    echo "Unknown OS"
+fi
