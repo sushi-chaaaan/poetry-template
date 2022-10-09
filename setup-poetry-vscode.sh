@@ -262,6 +262,7 @@ if [ "$HOME" = "$(pwd)" ]; then
     mkdir -p "$new_dir_name"
     cd "$new_dir_name" || exit
 fi
+wait
 
 if [ "$OS_ENV" = "WSL" ]; then
     # install vscode
